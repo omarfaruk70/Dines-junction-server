@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 require('dotenv').config()
 const port = process.env.PORT || 5000
@@ -22,9 +22,35 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-   
     await client.connect();
-    // Send a ping to confirm a successful connection
+    const database = client.db('Dines-Junction-Client');
+    const allFoodCollection = database.collection('all food');
+
+
+    // get all food in the all food routes
+    app.get('/api/v1/route/getallfood', async(req, res) => {
+      const options = {
+        sort: {price: 1},
+        projection : {_id: 1, foodCategory: 1, foodImage: 1, foodName: 1, price: 1, quantity: 1}
+      }
+      const cursor = allFoodCollection.find({}, options);
+      const result =await cursor.toArray();
+      res.send(result);
+    })
+
+  // get a single food item from the allfood page
+  app.get('/api/v1/route/getallfood/singlefood/:id', async(req, res) => {
+    const foodId = req.params.id;
+    const query = {_id: new ObjectId(foodId)};
+    const result = await allFoodCollection.findOne(query);
+    res.send(result)
+  })
+
+
+
+
+
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
