@@ -88,12 +88,19 @@ async function run() {
     const query = {_id: new ObjectId(foodId)};
     const options = {
       sort: {price: 1},
-      projection : {foodName: 1, price: 1, quantity: 1}
+      projection : {foodName: 1, price: 1, quantity: 1, madeBy: 1, foodImage: 1 }
     }
     const result = await allFoodCollection.findOne(query, options);
     res.send(result)
   })
 
+
+  // get all orderd food item based on email
+  app.get('/api/v1/route/getorderdfood', async(req, res) => {
+    const cursor = purchaseFoodCollection.find();
+    const result = await cursor.toArray();
+    res.send(result);
+  }) 
   // post user purchase informations at a collection
   app.post('/api/v1/user/purchasefood', async(req, res) => {
     const specificFood = req.body;
