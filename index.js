@@ -36,6 +36,15 @@ async function run() {
     // demo link: http://localhost:5000/api/v1/route/getallfood?origin='Bangladesh' eivabe request korle specific origin er data dibe
     // ar na hole sob dibe.. eita ekta object er maddhome pathate hoy.
     // 2. ---> sort by accending / or decending
+    // demo link: http://localhost:5000/api/v1/route/getallfood/?origin=Bangladesh&sortField=price&sortOrder=asc
+    // -----------> pagination fomate
+    // demo link: http://localhost:5000/api/v1/route/getallfood/?origin=Bangladesh&sortField=price&sortOrder=asc&page=1&limit=10
+
+    // get the total number of the foods
+    app.get('/getallfood', async(req, res) => {
+      const allfoodCount = await allFoodCollection.estimatedDocumentCount();
+      res.send({allfoodCount})
+    })
     app.get('/api/v1/route/getallfood', async(req, res) => {
 
       let queryObj = {};  // filter by country(bangladesh, india, china, america)
@@ -45,6 +54,10 @@ async function run() {
       const origin = req.query.origin;
       const sortField = req.query.sortField;
       const sortOrder = req.query.sortOrder;
+      // pagination
+      const page = Number(req.query.page);
+      const limit = Number(req.query.limit);
+      const skip = (page - 1) * limit;
 
       const options = {
         projection : {_id: 1, foodCategory: 1, foodImage: 1, foodName: 1, price: 1, origin: 1, quantity: 1}
@@ -56,7 +69,7 @@ async function run() {
       if(sortField && sortOrder){
         sortObj[sortField] = sortOrder;
       }
-      const cursor = allFoodCollection.find({}, options, queryObj).sort(sortObj);
+      const cursor = allFoodCollection.find(queryObj, options).sort(sortObj).skip(skip).limit(limit);
       const result =await cursor.toArray();
       res.send(result);
     })
