@@ -28,19 +28,35 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // await client.connect();
+    await client.connect();
     const database = client.db("Dines-Junction");
     const allFoodCollection = database.collection("all food");
     const purchaseFoodCollection = database.collection("purchased foods");
 
+
+      // jwt middleware -----> if token is exist then enter or logout
+      const logger = (req, res, next) => {
+        const token = req.cookies.access_token;
+        if (!token) {
+          return res.status(401).send({ message: "UnAuthorized Access" });
+        }
+        jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decode) => {
+          if (err) {
+            return res.status(403).send({ message: "Forbidden Access" });
+          }
+          req.user = decode;
+          next();
+        });
+      };
+
     // // Create a json web token and send it to the client side
-    app.post("/api/v1/user/auth/jwt/access-token", async (req, res) => {
+    app.post("/api/v1/user/auth/jwt/access_token", async (req, res) => {
       const user = req.body;
       const jwtToken = jwt.sign(user, process.env.JWT_SECRET_KEY, {
         expiresIn: "1h",
       });
       res
-        .cookie("access-token", jwtToken, {
+        .cookie("access_token", jwtToken, {
           httpOnly: true,
           secure: true,
           sameSite: "none",
@@ -48,21 +64,7 @@ async function run() {
         .send({ success: true });
     });
 
-    // jwt middleware -----> if token is exist then enter or logout
-    const logger = (req, res, next) => {
-      const token = req.cookies.access - token;
-      console.log(token);
-      if (!token) {
-        return res.status(401).send({ message: "UnAuthorized Access" });
-      }
-      jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decode) => {
-        if (err) {
-          return res.status(403).send({ message: "Forbidden Access" });
-        }
-        req.user = decode;
-        next();
-      });
-    };
+  
 
     // get all food in the all food routes
     // 1. ----> sortbyquery(origin/country)
@@ -78,7 +80,7 @@ async function run() {
       const allfoodCount = await allFoodCollection.estimatedDocumentCount();
       res.send({ allfoodCount });
     });
-    app.get("/api/v1/route/getallfood", async (req, res) => {
+    app.get("/api/v1/route/getallfood",  async (req, res) => {
       let queryObj = {}; // filter by country(bangladesh, india, china, america)
       const sortObj = {};
 
@@ -144,18 +146,34 @@ async function run() {
     });
 
     // get all orderd food item based on email
-    app.get("/api/v1/route/getorderdfood", async (req, res) => {
-      const cursor = purchaseFoodCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
+    app.get("/api/v1/route/getorderdfood", logger, async (req, res) => {
+    const queryEmail = req.query.email;
+    const tokenEmail = req.user.email;
+    if(queryEmail !== tokenEmail){
+      return res.status(401).send({message: 'UnAuthorized Access'});
+    }
+    let query = {};
+    if(queryEmail){
+      query.buyerEmail = queryEmail ; // alternative query["buyerEmail"] = queryEmail;
+    }
+    const result = await purchaseFoodCollection.find(query).toArray();
+    res.send(result);
     });
+
     // post user purchase informations at a collection
-    app.post("/api/v1/user/purchasefood", async (req, res) => {
+    app.post("/api/v1/user/purchasefood", logger, async (req, res) => {
       const specificFood = req.body;
       const result = await purchaseFoodCollection.insertOne(specificFood);
-      // console.log(result);
       res.send(result);
     });
+
+    // delete a specific orderd food
+    app.delete('/api/v1/user/deletefood/:id', async(req, res) => {
+      const foodId = req.params.id;
+      const query = {_id: new ObjectId(foodId)};
+      const result = await purchaseFoodCollection.deleteOne(query);
+      res.send(result);
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log(
