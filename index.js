@@ -53,7 +53,7 @@ async function run() {
     app.post("/api/v1/user/auth/jwt/access_token", async (req, res) => {
       const user = req.body;
       const jwtToken = jwt.sign(user, process.env.JWT_SECRET_KEY, {
-        expiresIn: "1h",
+        expiresIn: "1d",
       });
       res
         .cookie("access_token", jwtToken, {
@@ -167,6 +167,12 @@ async function run() {
       res.send(result);
     });
 
+    // post new add food on the allfoodCollection with AddBy(logged in userName and Email);
+    app.post('/api/v1/user/addfood', async(req, res)=> {
+      const thisFood = req.body;
+      const result = await allFoodCollection.insertOne(thisFood);
+      res.send(result);
+    })
     // delete a specific orderd food
     app.delete('/api/v1/user/deletefood/:id', async(req, res) => {
       const foodId = req.params.id;
