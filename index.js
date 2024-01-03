@@ -149,7 +149,7 @@ async function run() {
     app.get("/api/v1/route/getorderdfood", logger, async (req, res) => {
     const queryEmail = req.query.email;
     const tokenEmail = req.user.email;
-    if(queryEmail !== tokenEmail){
+    if(queryEmail.toLowerCase() !== tokenEmail.toLowerCase()){
       return res.status(401).send({message: 'UnAuthorized Access'});
     }
     let query = {};
@@ -160,6 +160,23 @@ async function run() {
     res.send(result);
     });
 
+    // get my added food based on user login email / jwt token email
+    app.get('/api/v1/route/myaddedfood',logger, async(req, res) => {
+      const queryEmail = req.query.email;
+      const tokenEmail = req.user.email;
+      if( !queryEmail || (queryEmail !== tokenEmail)){
+       return res.status(401).send({message: 'UnAuthorized Access'})
+      }
+      else{
+        let query = {};
+        if(queryEmail){
+          query.email = queryEmail;
+        }
+        const cursor = allFoodCollection.find(query);
+        const result = await cursor.toArray() ;
+        res.send(result);
+      }
+    })
     // post user purchase informations at a collection
     app.post("/api/v1/user/purchasefood", logger, async (req, res) => {
       const specificFood = req.body;
@@ -168,13 +185,13 @@ async function run() {
     });
 
     // post new add food on the allfoodCollection with AddBy(logged in userName and Email);
-    app.post('/api/v1/user/addfood', async(req, res)=> {
+    app.post('/api/v1/user/addfood', logger, async(req, res)=> {
       const thisFood = req.body;
       const result = await allFoodCollection.insertOne(thisFood);
       res.send(result);
     })
     // delete a specific orderd food
-    app.delete('/api/v1/user/deletefood/:id', async(req, res) => {
+    app.delete('/api/v1/user/deletefood/:id', logger, async(req, res) => {
       const foodId = req.params.id;
       const query = {_id: new ObjectId(foodId)};
       const result = await purchaseFoodCollection.deleteOne(query);
