@@ -177,6 +177,14 @@ async function run() {
         res.send(result);
       }
     })
+
+    // get a single food of myaddedfood for update specific food information
+    app.get('/api/v1/route/myaddedfood/:id', async(req, res) => {
+      const foodId = req.params.id;
+      const query = {_id: new ObjectId(foodId)};
+      const result = await allFoodCollection.findOne(query);
+      res.send(result);
+    })
     // post user purchase informations at a collection
     app.post("/api/v1/user/purchasefood", logger, async (req, res) => {
       const specificFood = req.body;
