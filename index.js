@@ -205,6 +205,13 @@ async function run() {
       const result = await purchaseFoodCollection.deleteOne(query);
       res.send(result);
     })
+    // delete a specific added food item
+    app.delete('/api/v1/route/myaddedfood/:id', async(req, res) => {
+      const foodId = req.params.id;
+      const query = {_id: new ObjectId(foodId)};
+      const result = await allFoodCollection.deleteOne(query);
+      res.send(result);
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log(
