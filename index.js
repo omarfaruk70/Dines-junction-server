@@ -7,6 +7,7 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 
+// built in middlewares
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -197,6 +198,28 @@ async function run() {
       const thisFood = req.body;
       const result = await allFoodCollection.insertOne(thisFood);
       res.send(result);
+    })
+
+    // Put or update a addedfood information
+    app.put('/api/v1/user/updatefoodinfo/:id', async(req, res) => {
+      const specificFoodId = req.params.id;
+      const specificFood = req.body;
+      const filter = {_id: new ObjectId(specificFoodId)}
+      const updatedInfo = {
+        $set: {
+          foodName: specificFood.foodName,
+          foodImage: specificFood.foodImage,
+          foodCategory:specificFood.foodCategory,
+          origin: specificFood.origin,
+          price: specificFood.price,
+          ingredients: specificFood.ingredients,
+          quantity: specificFood.quantity
+        }
+      }
+      const result = await allFoodCollection.updateOne(filter, updatedInfo);
+      res.send(result);
+      console.log(result);
+
     })
     // delete a specific orderd food
     app.delete('/api/v1/user/deletefood/:id', logger, async(req, res) => {
