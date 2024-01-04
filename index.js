@@ -31,6 +31,7 @@ async function run() {
   try {
     await client.connect();
     const database = client.db("Dines-Junction");
+    const loggedinUser = database.collection('loggedin user');
     const allFoodCollection = database.collection("all food");
     const purchaseFoodCollection = database.collection("purchased foods");
 
@@ -184,6 +185,12 @@ async function run() {
       const foodId = req.params.id;
       const query = {_id: new ObjectId(foodId)};
       const result = await allFoodCollection.findOne(query);
+      res.send(result);
+    })
+    // trac all loggedin / registerd user in database
+    app.post('/api/v1/savealluserinfo/loggedinuser', async(req, res) => {
+      const userInfo = req.body;
+      const result = await loggedinUser.insertOne(userInfo);
       res.send(result);
     })
     // post user purchase informations at a collection
