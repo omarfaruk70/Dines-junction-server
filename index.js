@@ -11,6 +11,9 @@ const port = process.env.PORT || 5000;
 app.use(
   cors({
     origin: "http://localhost:5173",
+    origin: "dines-junction.web.app",
+    origin: "dines-junction.firebaseapp.com",
+
     credentials: true,
   })
 );
